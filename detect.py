@@ -25,7 +25,7 @@ threshold = 1
 out_dir = 'output_images'
 
 #img = mpimg.imread('test_images/test1.jpg')
-video = cv2.VideoCapture('test_video.mp4')
+video = cv2.VideoCapture('project_video.mp4')
 
 if not video.isOpened():
     print('Could not open video')
