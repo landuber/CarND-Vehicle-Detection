@@ -15,13 +15,12 @@ cars = glob.glob('./vehicles/**/*.png')
 notcars = glob.glob('./non-vehicles/**/*.png')
 
 
-### TODO: Tweak these parameters and see how the results change.
-color_space = 'LUV' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
+color_space = 'YCrCb' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
 orient = 9  # HOG orientations
 pix_per_cell = 8 # HOG pixels per cell
 cell_per_block = 2 # HOG cells per block
 hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
-spatial_size = (32, 32) # Spatial binning dimensions
+spatial_size = (16, 16) # Spatial binning dimensions
 hist_bins = 32    # Number of histogram bins
 spatial_feat = True # Spatial features on or off
 hist_feat = True # Histogram features on or off
@@ -53,7 +52,7 @@ rand_state = np.random.randint(0, 100)
 X_train, X_test, y_train, y_test = train_test_split(
         scaled_X, y, test_size=0.2, random_state=rand_state)
 # Use a linear SVC (support vector classifier)
-svc = LinearSVC()
+svc = LinearSVC(C=0.01)
 # Train the SVC
 t = time.time()
 svc.fit(X_train, y_train)

@@ -4,6 +4,8 @@ import numpy as np
 import pickle
 import cv2
 import os.path
+from collections import deque
+from  moviepy.editor import VideoFileClip
 from scipy.ndimage.measurements import label
 from detection_functions import *
 
@@ -20,34 +22,13 @@ hist_bins = dist_pickle["hist_bins"]
 
 ystart = 400
 ystop = 656
-scales = [1.5]
+scales = [1.2, 1.8]
 threshold = 1
 out_dir = 'output_images'
+d = deque(maxlen = 5)
 
-#img = mpimg.imread('test_images/test1.jpg')
-video = cv2.VideoCapture('project_video.mp4')
-
-if not video.isOpened():
-    print('Could not open video')
-    sys.exit()
-
-ok, img = video.read()
-if not ok:
-    sys.exit()
-
-height, width, channels = img.shape
-
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter('tracked_video.mp4', fourcc, 20.0, (width, height))
-
-count = 0
-while True:
+def transform(img):
     bbox_list = []
-    ok, img = video.read()
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    if not ok:
-        break
-
     for scale in scales:
         _, bboxes = find_cars(img, ystart, ystop, scale, svc, 
                                        color_space, X_scaler, orient, pix_per_cell, 
@@ -57,22 +38,21 @@ while True:
 
     # Add heat to each box in box list
     heat = add_heat(heat, bbox_list)
+    d.append(heat)
 
+
+    heat = reduce(lambda x, y: np.add(x, y), d)
     # Apply threshold to help remove false positives
-    heat = apply_threshold(heat, threshold)
+    heat = apply_threshold(heat, len(d) * threshold)
 
     # Visualize the heatmap when displaying
-    heatmap = np.clip(heat, 0, 255)
+    #heatmap = np.clip(heat, 0, 255)
 
     # Find final boxes from heatmap using label function
-    labels = label(heatmap)
+    labels = label(heat)
     draw_img = draw_labeled_bboxes(np.copy(img), labels)
-    draw_img = cv2.cvtColor(draw_img, cv2.COLOR_RGB2BGR)
-    count += 1
-    #mpimg.imsave(os.path.join(out_dir, str(count) + '.jpg'), draw_img)
-    out.write(draw_img)
+    return draw_img
 
-video.release()
-out.release()
-
-
+clip = VideoFileClip('project_video.mp4')#.subclip(25, 30)
+newclip = clip.fl(lambda gf, t: transform(gf(t)))
+newclip.write_videofile("final_video.mp4")
